@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import { SupabaseProvider } from "@/components/supabase-provider";
 
 export const metadata = {
   title: "To Do App",
@@ -8,7 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <SupabaseProvider>{children}</SupabaseProvider>
+      </body>
     </html>
   );
 }

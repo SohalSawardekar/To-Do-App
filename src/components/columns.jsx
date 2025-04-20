@@ -1,6 +1,10 @@
 import { Button } from "./ui/button";
 
-export const columns = [
+export const columns = (
+  handleEditTask,
+  handleDeleteTask,
+  handleToggleStatus
+) => [
   {
     accessorKey: "title",
     header: "Title",
@@ -12,31 +16,48 @@ export const columns = [
   {
     accessorKey: "date",
     header: "Date",
-    cell: ({ row }) => {
-      const date = row.getValue("date");
-      return date ? new Date(date).toLocaleDateString() : "No Date Set";
-    },
   },
   {
     accessorKey: "location",
     header: "Location",
   },
   {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const task = row.original;
+      return (
+        <span
+          className={`px-2 py-1 rounded-full text-white text-sm ${
+            task.completed ? "bg-green-500" : "bg-yellow-500"
+          }`}
+        >
+          {task.completed ? "Completed" : "Pending"}
+        </span>
+      );
+    },
+  },
+  {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => (
-      <div className="flex gap-2">
-        <Button size="sm" variant="outline" className={"hover:cursor-pointer"}>
-          Edit
-        </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          className={"hover:cursor-pointer"}
-        >
-          Delete
-        </Button>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const task = row.original;
+      return (
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => handleEditTask(task)}>
+            Edit
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => handleDeleteTask(task.id)}
+          >
+            Delete
+          </Button>
+          <Button onClick={() => handleToggleStatus(task.id)}>
+            {task.completed ? "Mark Pending" : "Mark Done"}
+          </Button>
+        </div>
+      );
+    },
   },
 ];

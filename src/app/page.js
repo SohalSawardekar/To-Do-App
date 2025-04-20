@@ -1,12 +1,8 @@
-import React from "react";
 import { LoginForm } from "@/components/login";
-import { RegisterForm } from "@/components/register";
-import Loading from "@/components/loading";
-import { supabase } from "@/lib/supabase";
-import Dashboard from "@/components/dashboard";
+import React from "react";
 
 const page = () => {
-  return <Dashboard />;
+  return <LoginForm />;
 };
 
 export default page;

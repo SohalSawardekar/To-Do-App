@@ -12,8 +12,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { Eye, EyeClosed } from "lucide-react";
+import { Eye, EyeClosed, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import bcrypt from "bcryptjs";
 
 export function RegisterForm({ className, ...props }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -22,11 +25,57 @@ export function RegisterForm({ className, ...props }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false); // 🌀 Loading state
 
-  const handleSubmit = (e) => {
+  const router = useRouter();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log({ name, email, password, confirmPassword });
+    setError(null);
+    setLoading(true);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    const {
+      data: { user },
+      error: signUpError,
+    } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (signUpError) {
+      setError(signUpError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (user) {
+      const hashedPassword = bcrypt.hashSync(password, 10);
+
+      const { error: insertError } = await supabase.from("Users").insert([
+        {
+          id: user.id,
+          name,
+          email,
+          password: hashedPassword,
+        },
+      ]);
+
+      if (insertError) {
+        setError(insertError.message);
+        setLoading(false);
+        return;
+      }
+    }
+
+    setLoading(false);
+    router.push("/auth/login");
   };
 
   return (
@@ -50,6 +99,7 @@ export function RegisterForm({ className, ...props }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </div>
               <div className="grid gap-2">
@@ -61,6 +111,7 @@ export function RegisterForm({ className, ...props }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </div>
               <div className="grid gap-2">
@@ -74,12 +125,14 @@ export function RegisterForm({ className, ...props }) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={loading}
                   />
                   <Button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-1"
                     variant="ghost"
+                    disabled={loading}
                   >
                     {showPassword ? <Eye /> : <EyeClosed />}
                   </Button>
@@ -97,20 +150,33 @@ export function RegisterForm({ className, ...props }) {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
+                    disabled={loading}
                   />
                   <Button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-1"
                     variant="ghost"
+                    disabled={loading}
                   >
                     {showConfirmPassword ? <Eye /> : <EyeClosed />}
                   </Button>
                 </div>
               </div>
 
-              <Button type="submit" className="w-full">
-                Register
+              {error && (
+                <p className="text-sm text-red-500 text-center">{error}</p>
+              )}
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                    Creating Account...
+                  </>
+                ) : (
+                  "Register"
+                )}
               </Button>
 
               <div className="mt-4 text-center text-sm">

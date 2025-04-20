@@ -14,15 +14,35 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState } from "react";
 import { Eye, EyeClosed } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({ className, ...props }) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // You can handle form data here
+    setLoading(true);
+    setError(null);
+
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      setError(authError.message);
+      console.error("Login error:", authError.message);
+    } else {
+      router.push("/dashboard");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -79,8 +99,13 @@ export function LoginForm({ className, ...props }) {
                   </a>
                 </div>
               </div>
-              <Button type="submit" className="w-full">
-                Login
+
+              {error && (
+                <p className="text-sm text-red-600 text-center">{error}</p>
+              )}
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
